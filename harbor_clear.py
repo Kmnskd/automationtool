@@ -12,6 +12,7 @@ baseline_service = [
             "devp-client-integration",
             "devp-user-center",
             "devp-api-gateway",
+            "baseline-board",
         ]
 
 env = ["baseline-dev", "baseline-test", "baseline-prd"]
