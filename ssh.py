@@ -16,3 +16,40 @@ if __name__ == '__main__':
     tag = sys.argv[3]
     ssh_hd(code_type, branch, tag)
 
+#!/bin/bash
+
+############# SET VARIABLES #############
+
+# Env Variables
+BACKUPSERVER="101.200.146.218" # Backup Server Ip
+BACKUPDIR=/var/backup/mysql
+BACKUPREMOTEDIR="/data/backup/kubernetes/"
+NOW="$(date +"%Y-%m-%d")"
+STARTTIME=$(date +"%s")
+
+
+############# BUILD ENVIROMENT #############
+# Check if temp Backup Directory is empty
+mkdir $BACKUPDIR
+
+if [ "$(ls -A $BACKUPDIR)" ]; then
+    echo "Take action $BACKUPDIR is not Empty"
+    rm -f $BACKUPDIR/*.gz
+    rm -f $BACKUPDIR/*.mysql
+else
+    echo "$BACKUPDIR is Empty"
+fi
+
+############# BACKUP SQL DATABASES #############
+for DB in $(mysql -u$USER -p$PASS -h $HOST -e 'show databases' -s --skip-column-names); do
+    mysqldump -u$USER -p$PASS -h $HOST --lock-tables=false $DB > "$BACKUPDIR/$DB.sql";
+done
+
+############# ZIP BACKUP #############
+cd $BACKUPDIR
+tar -zcvf backup-${NOW}.tar.gz *.sql
+
+############# MOVE BACKUP TO REMOTE #############
+scp $BACKUPDIR/backup-${NOW}.tar.gz root@$BACKUPSERVER:$BACKUPREMOTEDIR
+
+# done
